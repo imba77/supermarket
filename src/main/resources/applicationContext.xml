@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       https://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/mvc
+       http://www.springframework.org/schema/mvc/spring-mvc.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!--开启注解配置-->
+    <context:annotation-config></context:annotation-config>
+    <!--扫描指定包下的注解-->
+    <context:component-scan base-package="top.imba77.dao"/>
+    <context:component-scan base-package="top.imba77.service"/>
+    <context:component-scan base-package="top.imba77.controller"/>
+    <!--加载jdbc信息-->
+    <context:property-placeholder location="classpath:db.properties"/>
+    <!--配置C3P0数据源-->
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="jdbcUrl" value="${url}"></property>
+        <property name="driverClass" value="${driver}"/>
+        <property name="user" value="${user}"/>
+        <property name="password" value="${password}"/>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+    </bean>
+
+    <!--扫描指定包下的mapper接口，创建对应的bean，默认创建的bean是mapper接口的名称的首字母小写-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="top.imba77.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <!-- 事务管理 -->
+    <!-- 事务管理器 -->
+    <bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <tx:advice id="txAdvice" transaction-manager="txManager">
+        <tx:attributes>
+            <tx:method name="transfer" propagation="REQUIRED" isolation="DEFAULT" read-only="false"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!--  AOP编程，目标类有ABCD（4个连接点），切入点表达式 确定增强的连接器，从而获得切入点：ABC -->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* top.imba77.service.*.*(..))"/>
+    </aop:config>
+
+    <mvc:annotation-driven/>
+    <!-- 配置视图解析器 -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <!-- 配置逻辑视图的前缀 -->
+        <property value="/WEB-INF/jsp/" name="prefix"/>
+        <!--&lt;!&ndash; 配置逻辑视图的后缀 &ndash;&gt;-->
+        <property value=".jsp" name="suffix"/>
+    </bean>
+    <!--静态资源处理-->
+    <mvc:resources mapping="/static/**" location="/static/"/>
+
+    <!--转换器配置 -->
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <!--日期转换服务-->
+                <bean class="top.imba77.utils.DateConverter"/>
+            </set>
+        </property>
+    </bean>
+    <!-- 文件上传,id必须设置为multipartResolver -->
+    <bean class="org.springframework.web.multipart.commons.CommonsMultipartResolver" id="multipartResolver">
+        <!-- 设置文件上传大小 -->
+        <property value="5000000" name="maxUploadSize"/>
+        <property value="utf-8" name="defaultEncoding"/>
+    </bean>
+
+</beans>
