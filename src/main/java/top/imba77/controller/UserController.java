@@ -11,6 +11,7 @@ import top.imba77.pojo.Role;
 import top.imba77.pojo.User;
 import top.imba77.service.RoleService;
 import top.imba77.service.UserService;
+import top.imba77.util.CommonUtil;
 import top.imba77.vo.UserVo;
 
 import javax.servlet.http.HttpServletRequest;
@@ -34,18 +35,28 @@ public class UserController {
             , @RequestParam(value = "queryUserRole", required = false) Integer roleId
             , @RequestParam(value = "pageIndex", required = false) Integer pageIndex
     ) throws Exception {
+        HttpSession session = req.getSession();
+        if (!CommonUtil.validLogin(session)) {
+            return "redirect:/login.jsp";
+        }
+        if (null != queryname || !("".equals(queryname))) {
+            req.setAttribute("queryname", queryname);
+        }
+        if (null != roleId) {
+            req.setAttribute("roleId", roleId);
+        }
         int totalCount = userService.queryUserCount();
+        req.setAttribute("totalCount", totalCount);
         int pageSize = 6;
         int totalPageCount = totalCount % 6 == 0 ? totalCount / 6 : (totalCount / 6) + 1;
+        req.setAttribute("totalPageCount", totalPageCount);
         int currentPageNo = 1;
         if (pageIndex != null) {
             currentPageNo = pageIndex;
         }
+        req.setAttribute("currentPageNo", currentPageNo);
         List<UserVo> userList = userService.queryUserList(queryname, roleId, currentPageNo, pageSize);
         req.setAttribute("userList", userList);
-        req.setAttribute("totalCount", totalCount);
-        req.setAttribute("currentPageNo", currentPageNo);
-        req.setAttribute("totalPageCount", totalPageCount);
         List<Role> roleList = roleService.queryRoleList();
         req.setAttribute("roleList", roleList);
         return "userlist";
@@ -53,9 +64,13 @@ public class UserController {
 
     @RequestMapping("/userview/{userId}")
     public String queryUserInfo(@PathVariable("userId") String userId, HttpServletRequest req) throws Exception {
-        UserVo userVo = userService.queryUserById(userId);
-        req.setAttribute("user", userVo);
-        return "userview";
+        HttpSession session = req.getSession();
+        if (CommonUtil.validLogin(session)) {
+            UserVo userVo = userService.queryUserById(userId);
+            req.setAttribute("user", userVo);
+            return "userview";
+        }
+        return "redirect:/login.jsp";
     }
 
     @RequestMapping("/deluser/{userId}")
@@ -70,28 +85,35 @@ public class UserController {
 
     @RequestMapping("/usermodify/{userId}")
     public String userModify(@PathVariable("userId") String userId, HttpServletRequest req) throws Exception {
-        UserVo userVo = userService.queryUserById(userId);
-        req.setAttribute("user", userVo);
-        return "usermodify";
+        HttpSession session = req.getSession();
+        if (CommonUtil.validLogin(session)) {
+            UserVo userVo = userService.queryUserById(userId);
+            req.setAttribute("user", userVo);
+            return "usermodify";
+        }
+        return "redirect:/login.jsp";
     }
 
     @RequestMapping("/modifyuser")
-    public String modifyUser(User user, HttpServletRequest req) throws Exception {
-        User loginUser = (User) req.getSession().getAttribute("loginUser");
-        Boolean b = userService.updateUserInfo(user, loginUser.getId());
-        return "userlist";
-    }
-
-    @RequestMapping("/rolelist")
-    @ResponseBody
-    public List<Role> queryRoleList() throws Exception {
-        List<Role> roleList = roleService.queryRoleList();
-        return roleList;
+    public String modifyUser(User user, HttpSession session) throws Exception {
+        User loginUser = (User) session.getAttribute("loginUser");
+        userService.updateUserInfo(user, loginUser.getId());
+        return "forward:userlist.html";
     }
 
     @RequestMapping("/add.html")
-    public String goAddUser() {
-        return "useradd";
+    public String goAddUser(HttpSession session) {
+        if (CommonUtil.validLogin(session)) {
+            return "useradd";
+        }
+        return "redirect:/login.jsp";
+    }
+
+    @RequestMapping("/adduser")
+    public String addUser(User user, HttpSession session) throws Exception {
+        User loginUser = (User) session.getAttribute("loginUser");
+        userService.addUser(user, loginUser.getId());
+        return "forward:userlist.html";
     }
 
     @RequestMapping("/ucexist/{userCode}")
@@ -107,44 +129,9 @@ public class UserController {
         return map;
     }
 
-    @RequestMapping("/adduser")
-    public String addUser(User user, HttpServletRequest req) throws Exception {
-        HttpSession session = req.getSession();
-        User loginUser = (User) session.getAttribute("loginUser");
-        Long id = loginUser.getId();
-        System.out.println(id);
-        Boolean b = userService.addUser(user, id);
-        return "userlist";
-    }
-
-    @RequestMapping("/pwdmodify.html")
-    public String goModifyPwd() {
-        return "pwdmodify";
-    }
-
-    @RequestMapping("/validpwd/{oldpassword}")
+    @RequestMapping("/rolelist")
     @ResponseBody
-    public Map<String, String> validPwd(@PathVariable("oldpassword") String oldpassword, HttpServletRequest req) throws Exception {
-        User loginUser = (User) req.getSession().getAttribute("loginUser");
-        Map<String, String> map = new HashMap<>();
-        if (loginUser.getUserName() == null) {
-            map.put("result", "sessionerror");
-            return map;
-        }
-        Boolean ishave = userService.validPwd(oldpassword, loginUser.getId());
-        if (ishave) {
-            map.put("result", "true");
-        } else {
-            map.put("result", "false");
-        }
-        return map;
-    }
-
-    @RequestMapping("/modifypwd")
-    public String modifyPwd(@RequestParam("newpassword") String newPassword, HttpServletRequest req) throws Exception {
-        User loginUser = (User) req.getSession().getAttribute("loginUser");
-        loginUser.setUserPassword(newPassword);
-        Boolean flag = userService.updatePwdById(loginUser);
-        return "forward:/login.jsp";
+    public List<Role> queryRoleList() throws Exception {
+        return roleService.queryRoleList();
     }
 }

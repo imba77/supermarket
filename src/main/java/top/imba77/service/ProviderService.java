@@ -14,7 +14,7 @@ public interface ProviderService {
 
     ProviderVo queryProviderById(String proId) throws Exception;
 
-    Boolean updateProviderInfo(Provider provider, Long id) throws Exception;
+    void updateProviderInfo(Provider provider, Long id) throws Exception;
 
-    Boolean addProvider(Provider provider, Long id) throws Exception;
+    void addProvider(Provider provider, Long id) throws Exception;
 }

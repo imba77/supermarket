@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import top.imba77.dao.BillMapper;
 import top.imba77.dao.ProviderMapper;
 import top.imba77.pojo.Bill;
-import top.imba77.pojo.BillExample;
 import top.imba77.pojo.Provider;
 import top.imba77.vo.BillVo;
 
@@ -51,31 +50,19 @@ public class BillServiceImpl implements BillService {
     }
 
     @Override
-    public Boolean addBill(Bill bill, Long id) throws Exception {
-        bill.setCreatedBy(id);
-        bill.setCreationDate(new Date());
-        billMapper.insert(bill);
-        return null;
-    }
-
-    @Override
-    public Boolean updateBillInfo(Bill bill, Long id) throws Exception {
+    public void updateBillInfo(Bill bill, Long id) throws Exception {
         Bill tempBill = billMapper.selectByPrimaryKey(bill.getId());
         bill.setCreatedBy(tempBill.getCreatedBy());
         bill.setCreationDate(tempBill.getCreationDate());
         bill.setModifyBy(id);
         bill.setModifyDate(new Date());
-        int i = billMapper.updateByPrimaryKey(bill);
-        if (i > 0) {
-            return true;
-        }
-        return false;
+        billMapper.updateByPrimaryKey(bill);
     }
 
-
     @Override
-    public int queryUserCount() throws Exception {
-        BillExample example = new BillExample();
-        return (int) billMapper.countByExample(example);
+    public void addBill(Bill bill, Long id) throws Exception {
+        bill.setCreatedBy(id);
+        bill.setCreationDate(new Date());
+        billMapper.insert(bill);
     }
 }

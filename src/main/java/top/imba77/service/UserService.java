@@ -6,7 +6,6 @@ import top.imba77.vo.UserVo;
 import java.util.List;
 
 public interface UserService {
-    User login(String userCode, String userPassword) throws Exception;
 
     List<UserVo> queryUserList(String queryname, Integer roleId, Integer currentPageNo, Integer pageSize) throws Exception;
 
@@ -16,13 +15,9 @@ public interface UserService {
 
     boolean delUserById(String userId) throws Exception;
 
-    Boolean addUser(User user, Long id) throws Exception;
+    void addUser(User user, Long id) throws Exception;
 
     Boolean findUserByUserCode(String userCode) throws Exception;
 
-    Boolean updatePwdById(User user) throws Exception;
-
-    Boolean validPwd(String oldpassword, Long id) throws Exception;
-
-    Boolean updateUserInfo(User user, Long id) throws Exception;
+    void updateUserInfo(User user, Long id) throws Exception;
 }

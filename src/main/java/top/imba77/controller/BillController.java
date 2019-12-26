@@ -12,9 +12,11 @@ import top.imba77.pojo.Provider;
 import top.imba77.pojo.User;
 import top.imba77.service.BillService;
 import top.imba77.service.ProviderService;
+import top.imba77.util.CommonUtil;
 import top.imba77.vo.BillVo;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,18 +36,26 @@ public class BillController {
             , @RequestParam(value = "queryProviderId", required = false) Integer queryProviderId
             , @RequestParam(value = "queryIsPayment", required = false) Integer queryIsPayment
     ) throws Exception {
-        List<BillVo> billList = billService.queryBillList(queryProductName, queryProviderId, queryIsPayment);
-        req.setAttribute("billList", billList);
+        HttpSession session = req.getSession();
+        if (!CommonUtil.validLogin(session)) {
+            return "redirect:/login.jsp";
+        }
         List<Provider> providerList = providerService.queryProviderList();
         req.setAttribute("providerList", providerList);
+        List<BillVo> billList = billService.queryBillList(queryProductName, queryProviderId, queryIsPayment);
+        req.setAttribute("billList", billList);
         return "billlist";
     }
 
     @RequestMapping("/billview/{billId}")
     public String queryUserInfo(@PathVariable("billId") String billId, HttpServletRequest req) throws Exception {
-        BillVo billVo = billService.queryBillById(billId);
-        req.setAttribute("bill", billVo);
-        return "billview";
+        HttpSession session = req.getSession();
+        if (CommonUtil.validLogin(session)) {
+            BillVo billVo = billService.queryBillById(billId);
+            req.setAttribute("bill", billVo);
+            return "billview";
+        }
+        return "redirect:/login.jsp";
     }
 
     @RequestMapping("/delbill/{billId}")
@@ -60,16 +70,35 @@ public class BillController {
 
     @RequestMapping("/billmodify/{billId}")
     public String billModify(@PathVariable("billId") String billId, HttpServletRequest req) throws Exception {
-        BillVo billVo = billService.queryBillById(billId);
-        req.setAttribute("bill", billVo);
-        return "billmodify";
+        HttpSession session = req.getSession();
+        if (CommonUtil.validLogin(session)) {
+            BillVo billVo = billService.queryBillById(billId);
+            req.setAttribute("bill", billVo);
+            return "billmodify";
+        }
+        return "redirect:/login.jsp";
     }
 
     @RequestMapping("/modifybill")
-    public String modifyBill(Bill bill, HttpServletRequest req) throws Exception {
-        User user = (User) req.getSession().getAttribute("loginUser");
-        Boolean b = billService.updateBillInfo(bill, user.getId());
-        return "billlist";
+    public String modifyBill(Bill bill, HttpSession session) throws Exception {
+        User user = (User) session.getAttribute("loginUser");
+        billService.updateBillInfo(bill, user.getId());
+        return "forward:billlist.html";
+    }
+
+    @RequestMapping("/add.html")
+    public String goAddUser(HttpSession session) {
+        if (CommonUtil.validLogin(session)) {
+            return "billadd";
+        }
+        return "redirect:/login.jsp";
+    }
+
+    @RequestMapping("/addbill")
+    public String addBill(Bill bill, HttpSession session) throws Exception {
+        User loginUser = (User) session.getAttribute("loginUser");
+        billService.addBill(bill, loginUser.getId());
+        return "forward:billlist.html";
     }
 
     @RequestMapping("/providerlist")
@@ -78,18 +107,5 @@ public class BillController {
         List<Provider> providerList = providerService.queryProviderList();
         return providerList;
     }
-
-    @RequestMapping("/add.html")
-    public String goAddUser() {
-        return "billadd";
-    }
-
-    @RequestMapping("/addbill")
-    public String addBill(Bill bill, HttpServletRequest req) throws Exception {
-        User loginUser = (User) req.getSession().getAttribute("loginUser");
-        Boolean b = billService.addBill(bill, loginUser.getId());
-        return "billlist";
-    }
-
 
 }

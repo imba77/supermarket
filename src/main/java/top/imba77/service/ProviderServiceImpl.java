@@ -8,7 +8,6 @@ import top.imba77.pojo.Provider;
 import top.imba77.pojo.ProviderExample;
 import top.imba77.vo.ProviderVo;
 
-import java.awt.*;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -51,27 +50,19 @@ public class ProviderServiceImpl implements ProviderService {
     }
 
     @Override
-    public Boolean updateProviderInfo(Provider provider, Long id) throws Exception {
+    public void updateProviderInfo(Provider provider, Long id) throws Exception {
         Provider tempProvider = providerMapper.selectByPrimaryKey(provider.getId());
 //        provider.setCreatedBy(tempProvider.getCreatedBy());
 //        provider.setCreationDate(tempProvider.getCreationDate());
         provider.setModifyBy(id);
         provider.setModifyDate(new Date());
-        int i = providerMapper.updateByPrimaryKey(provider);
-        if (i > 0) {
-            return true;
-        }
-        return false;
+        providerMapper.updateByPrimaryKey(provider);
     }
 
     @Override
-    public Boolean addProvider(Provider provider, Long id) throws Exception {
+    public void addProvider(Provider provider, Long id) throws Exception {
         provider.setCreatedBy(id);
         provider.setCreationDate(new Date());
-        int flag = providerMapper.insert(provider);
-        if (flag > 0) {
-            return true;
-        }
-        return false;
+        providerMapper.insert(provider);
     }
 }

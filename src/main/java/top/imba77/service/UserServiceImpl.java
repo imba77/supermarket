@@ -24,20 +24,6 @@ public class UserServiceImpl implements UserService {
     private RoleMapper roleMapper;
 
     @Override
-    public User login(String userCode, String userPassword) throws Exception {
-        UserExample example = new UserExample();
-        UserExample.Criteria criteria = example.createCriteria();
-        criteria.andUserCodeEqualTo(userCode);
-        criteria.andUserPasswordEqualTo(userPassword);
-        List<User> users = userMapper.selectByExample(example);
-        if (users.size() == 1) {
-            return users.get(0);
-        } else {
-            throw new Exception("请输入正确的用户名或密码");
-        }
-    }
-
-    @Override
     public List<UserVo> queryUserList(String queryname, Integer roleId, Integer currentPageNo, Integer pageSize) throws Exception {
         int startIndex = (currentPageNo - 1) * pageSize;
         Map<String, Object> param = new HashMap<>();
@@ -74,14 +60,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean addUser(User user, Long id) throws Exception {
+    public void addUser(User user, Long id) throws Exception {
         user.setCreatedBy(id);
         user.setCreationDate(new Date());
-        int i = userMapper.insert(user);
-        if (i > 0) {
-            return true;
-        }
-        return false;
+        userMapper.insert(user);
     }
 
     @Override
@@ -97,34 +79,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Boolean updatePwdById(User user) throws Exception {
-        int i = userMapper.updateByPrimaryKey(user);
-        if (i > 0) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Boolean validPwd(String oldpassword, Long id) throws Exception {
-        User user = userMapper.selectByPrimaryKey(id);
-        if (user.getUserPassword().equals(oldpassword)) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Boolean updateUserInfo(User user, Long id) throws Exception {
+    public void updateUserInfo(User user, Long id) throws Exception {
 //        User tempUser = userMapper.selectByPrimaryKey(user.getId());
 //        user.setCreatedBy(tempUser.getCreatedBy());
 //        user.setCreationDate(tempUser.getCreationDate());
         user.setModifyBy(id);
         user.setModifyDate(new Date());
-        int i = userMapper.updateByPrimaryKey(user);
-        if (i > 0) {
-            return true;
-        }
-        return false;
+        userMapper.updateByPrimaryKey(user);
     }
 }

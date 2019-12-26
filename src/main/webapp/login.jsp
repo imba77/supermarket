@@ -18,7 +18,8 @@
         <h1>超市订单管理系统</h1>
     </header>
     <section class="loginCont">
-        <form class="loginForm" action="${pageContext.request.contextPath }/login.html" name="actionForm" id="actionForm"
+        <form class="loginForm" action="${pageContext.request.contextPath }/login.html" name="actionForm"
+              id="actionForm"
               method="post">
             <div class="info">${error }</div>
             <div class="inputbox">
